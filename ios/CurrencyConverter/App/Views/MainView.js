@@ -22,18 +22,66 @@ var {
 
 
 var MainView = React.createClass({
-	componentDidMount : function(){
-
-	},
 	getInitialState: function() {
 
 	    return {
-	    	isLoading: true,
+	    	isLoading: false,
 	    	inputValue : '1',
 	    	fromKey : 'USD',
 	    	toKey : 'INR',
-	    	outputValue : '12345678'
+	    	outputValue : '',
+	    	unitRate : '63',
+	    	symbol : '$'
 	    };
+	},
+	componentDidMount : function(){
+		var self = this;
+
+		this.convertCurrency();
+	},
+	convertCurrency : function(){
+		this.prepareToMakeApiCall();
+	},
+	prepareToMakeApiCall : function(){
+		var baseUrl = 'http://api.fixer.io/latest';
+
+		var queryStringData = {
+			base : this.state.fromKey,
+			symbols : this.state.toKey
+		};
+
+		var querystring = Object.keys(queryStringData)
+		  .map(key => key + '=' + encodeURIComponent(queryStringData[key]))
+		  .join('&');
+
+		var url = baseUrl + "?" + querystring;
+		this.makeApiCall(url);
+	},
+	makeApiCall : function(query){
+		console.log(query);
+		this.setState({
+	      		isLoading: true
+	     });
+
+		fetch(query)
+	  		.then(response => response.json())
+	  		.then(responseData => this.handleCurrencyResponse(responseData))
+	  		.catch(error =>
+	     		this.setState({
+	      		isLoading: false,
+	      		message: 'errorr'
+   		})).done();
+	},
+	handleCurrencyResponse : function(response){
+				this.setState({
+	      		isLoading: false
+	     });
+		var rates = response.rates;
+
+		var result = this.state.inputValue * rates[this.state.toKey];
+
+		this.setState({ outputValue : result });
+		this.setState({ symbol : Utils.symbol[this.state.toKey] });
 	},
 	navigateToCurrencyView : function(callback){
 		var currency = Utils.currency;
@@ -57,27 +105,41 @@ var MainView = React.createClass({
 		});
 	},
 	handleConvertButtonPressed : function(){
-		this.setState({outputValue: this.state.inputValue * 62 });
+		this.convertCurrency();
 
 	},
 	handleSwitchButtonPressed : function(){
 		var from = this.state.fromKey,
 			to = this.state.toKey;
 
-			console.log(from + " " + to);
 		this.setState({fromKey: to});
 		this.setState({toKey: from});
 	},
 	onSearchTextChanged : function(event){
 		this.setState({inputValue: event.nativeEvent.text});
 	},
+	getSuccessView : function(){
+
+		return (
+				<View style={styles.successWrap}>
+					<View style={styles.resultLabelWrap}>
+						<Text style={styles.resultLabel}>{this.state.outputValue}</Text>
+					</View>
+					<View style={styles.altLabelWrap}>
+						<Text style={styles.altLabel}>1 USD equals 63.003 INR</Text>
+					</View>
+				</View>
+
+		);
+	},
 	render: function() {
-		var spinner = this.state.isLoading ? (<HUDActivityIndicator />) : (<View />);
+		//var spinner = this.state.isLoading ? (<HUDActivityIndicator />) : (<View />);
+		var spinner = this.state.isLoading ? (<HUDActivityIndicator />) : this.getSuccessView();
 
 		return (
 		<View style={styles.container}>
 			<View style={styles.innerContainer}>
-				<Text style={styles.buttonText}>Enter Currency Amount</Text>
+				<Text style={styles.textInputLabel}>Enter Amount To Convert</Text>
 			  <TextInput keyboardType="decimal-pad"
 			  	value={this.state.inputValue}
 			  	onChange={this.onSearchTextChanged.bind(this)} 
@@ -85,9 +147,13 @@ var MainView = React.createClass({
 
 			    <View style={styles.horContainer1}>
 					<View style={styles.fromContainer}>
-						<Text style={styles.buttonText}>From</Text>
-					  	<TouchableHighlight style={[styles.button]} underlayColor='#99d9f4' onPress={this.handleFromButtonPressed}>
-					    	<Text style={styles.buttonText}>{this.state.fromKey}</Text>
+						<Text style={styles.labelText}>From</Text>
+					  	<TouchableHighlight style={[styles.button, styles.row]} underlayColor='#99d9f4' onPress={this.handleFromButtonPressed}>
+					    	<View style={{flexDirection: "row", alignSelf: 'center' }}>
+					    		<Text style={styles.buttonText}>{this.state.fromKey}</Text>
+					    		<Image style={{width: 32, height : 32 }} source={require('image!down2x')} />
+					    	</View>
+
 					  	</TouchableHighlight>
 					</View>
 
@@ -98,11 +164,16 @@ var MainView = React.createClass({
 					</View>
 
 					<View style={styles.toContainer}>
-					<Text style={styles.buttonText}>To</Text>
-					  	<TouchableHighlight style={styles.button} underlayColor='#99d9f4' onPress={this.handleToButtonPressed}>
-					    	<Text style={styles.buttonText}>{this.state.toKey}</Text>
+						<Text style={styles.labelText}>To</Text>
+					  	<TouchableHighlight style={[styles.button, styles.row]} underlayColor='#99d9f4' onPress={this.handleToButtonPressed}>
+					    	<View style={{flexDirection: "row", alignSelf: 'center' }}>
+					    		<Text style={styles.buttonText}>{this.state.toKey}</Text>
+					    		<Image style={{width: 32, height : 32 }} source={require('image!down2x')} />
+					    	</View>
+
 					  	</TouchableHighlight>
 					</View>
+
 				</View>
 
 				<View style={styles.convertContainer}>
@@ -114,9 +185,10 @@ var MainView = React.createClass({
 				</View>
 
 	    	</View>
-			{spinner}
-			<View style={styles.horContainer1}>
-			    	<Text style={styles.buttonText}>&#8377; &#36; 23,34,563</Text>
+			<View style={styles.resultContainer}>
+
+				{spinner}
+			    	
 			</View>
 		</View>
 		); 
@@ -129,12 +201,30 @@ var styles = StyleSheet.create({
 		flex: 1,
 		padding: 16,
 		marginTop: 50,
-
-		// justifyContent: 'center',
-		// alignItems: 'center', //flex-start, flex-end, center, stretch
 		backgroundColor: '#1073ae'
 	},
-	innerContainer: {
+	textInputLabel : {
+		fontSize: 16,
+		color: 'white',
+		justifyContent: 'flex-start',
+		marginTop: 10,
+		fontWeight: '500'
+	},
+	successWrap : {
+		flex:1,
+		flexDirection : 'row',
+		justifyContent: 'flex-end',
+	},
+	resultLabelWrap : {
+		// flex:1,
+		flexDirection : 'row',
+		justifyContent: 'flex-end',
+	},
+	resultLabel : {
+		flex:1,
+		fontSize: 40,
+		color: 'white',
+		marginTop: 6,
 
 	},
 	textInput: {
@@ -147,9 +237,8 @@ var styles = StyleSheet.create({
 		borderColor: '#0ea378',
 		backgroundColor: 'white',
 		borderRadius: 3,
-		color: '#48BBEC',
-		justifyContent: 'flex-end',
-		textAlign : 'right'
+		//color: '#48BBEC',
+		justifyContent: 'flex-end'
 	},
 	horContainer1: {
 		flexDirection: 'row',
@@ -174,21 +263,24 @@ var styles = StyleSheet.create({
 		paddingLeft : 10
 	},
 	icon : {
+		marginTop : 15,
 		width : 36,
-		height : 36,
-		// backgroundColor:'red'
+		height : 36
 	},
 	convertContainer : {
 		flex :1,
 		flexDirection: 'row',
 		marginBottom: 20,
-		//alignItems: 'stretch',
-		// backgroundColor: 'red',
-				justifyContent: 'center',
-
+		justifyContent: 'center'
+	},
+	labelText : {
+		fontSize: 16,
+		fontWeight: '500',
+		color: 'white',
+		alignSelf: 'center',
+		marginBottom : 5
 	},
 	text: {
-	  	//marginTop: 40,
 		fontSize: 15,
 		textAlign: 'center',
 		color: 'black',
@@ -204,9 +296,6 @@ var styles = StyleSheet.create({
 		borderRadius: 3,
 		alignSelf: 'stretch',
 		justifyContent: 'center',
-		// marginLeft: 20,
-		// marginRight: 20,
-		
 	},
 	convertButton: {
 		flex: 1,
@@ -219,35 +308,10 @@ var styles = StyleSheet.create({
 		color: 'white',
 		alignSelf: 'center'
 	},
-	thumb: {
-	   width: 200,
-	   height: 200,
-	   marginRight: 10,
-	   borderRadius: 10
-	},
-	flowRight: {
-  flexDirection: 'row',
-  // alignItems: 'center',
-  alignSelf: 'stretch'
-},
-	flowRight1: {
-  flexDirection: 'row',
-  // alignItems: 'center',
-  alignSelf: 'stretch'
-},
-searchInput: {
-  		height: 36,
-  		width : 100,
-		marginTop: 20,
-		marginBottom: 10,
-		padding: 4,
-		fontSize: 18,
-		borderWidth: 1,
-		borderColor: '#0ea378',
-		backgroundColor: 'white',
-		borderRadius: 3,
-		color: '#48BBEC'
-}
+	resultContainer: {
+		flexDirection: 'row',
+		marginBottom: 20
+	}
 });
 
 module.exports = MainView;
