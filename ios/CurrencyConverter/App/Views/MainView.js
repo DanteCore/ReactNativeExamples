@@ -81,6 +81,7 @@ var MainView = React.createClass({
 		var result = this.state.inputValue * rates[this.state.toKey];
 
 		this.setState({ outputValue : result });
+		this.setState({ unitRate : rates[this.state.toKey] });
 		this.setState({ symbol : Utils.symbol[this.state.toKey] });
 	},
 	navigateToCurrencyView : function(callback){
@@ -114,6 +115,7 @@ var MainView = React.createClass({
 
 		this.setState({fromKey: to});
 		this.setState({toKey: from});
+		this.convertCurrency();
 	},
 	onSearchTextChanged : function(event){
 		this.setState({inputValue: event.nativeEvent.text});
@@ -121,15 +123,14 @@ var MainView = React.createClass({
 	getSuccessView : function(){
 
 		return (
-				<View style={styles.successWrap}>
-					<View style={styles.resultLabelWrap}>
+			<View>
+				<View style={styles.resultLabelWrap}>
 						<Text style={styles.resultLabel}>{this.state.outputValue}</Text>
-					</View>
-					<View style={styles.altLabelWrap}>
-						<Text style={styles.altLabel}>1 USD equals 63.003 INR</Text>
-					</View>
 				</View>
-
+				<View style={styles.resultLabelWrap}>
+						<Text style={styles.altLabel}>1 {this.state.fromKey} equals {this.state.unitRate} {this.state.toKey}</Text>
+				</View>
+			</View>
 		);
 	},
 	render: function() {
@@ -210,25 +211,23 @@ var styles = StyleSheet.create({
 		marginTop: 10,
 		fontWeight: '500'
 	},
-	successWrap : {
+	resultLabelWrap : {
 		flex:1,
 		flexDirection : 'row',
-		justifyContent: 'flex-end',
-	},
-	resultLabelWrap : {
-		// flex:1,
-		flexDirection : 'row',
-		justifyContent: 'flex-end',
+		justifyContent: 'flex-end'
 	},
 	resultLabel : {
-		flex:1,
 		fontSize: 40,
 		color: 'white',
 		marginTop: 6,
-
+	},
+	altLabel : {
+		fontSize: 24,
+		color: 'white',
+		marginTop: 6,
 	},
 	textInput: {
-		height: 36,
+		height: 40,
 		marginBottom: 10,
 		marginTop: 10,
 		padding: 4,
@@ -237,7 +236,6 @@ var styles = StyleSheet.create({
 		borderColor: '#0ea378',
 		backgroundColor: 'white',
 		borderRadius: 3,
-		//color: '#48BBEC',
 		justifyContent: 'flex-end'
 	},
 	horContainer1: {
@@ -309,7 +307,6 @@ var styles = StyleSheet.create({
 		alignSelf: 'center'
 	},
 	resultContainer: {
-		flexDirection: 'row',
 		marginBottom: 20
 	}
 });
