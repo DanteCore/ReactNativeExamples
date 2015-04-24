@@ -5,7 +5,7 @@ Currency Conerter App for iOS, made with [React-Native](https://github.com/faceb
 ### Screenshots:  
 Screen 1                   |   Screen 2                
 :-------------------------:|:-------------------------:
-<img src="http://ashwinpreet.github.io/CurrencyConverterApp/assets/screenshots/screen1.png" height="500"  width="271"/>  | <img src="http://ashwinpreet.github.io/CurrencyConverterApp/assets/screenshots/screen2.png" height="500"  width="271"/>
+<img src="http://ashwinpreet.github.io/CurrencyConverterApp/ScreenShots/screen1.png" height="500"  width="271"/>  | <img src="http://ashwinpreet.github.io/CurrencyConverterApp/ScreenShots/screen2.png" height="500"  width="271"/>
 
 
 ### Installation and Running
